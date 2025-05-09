@@ -30,11 +30,7 @@ export default {
 			const telegramMessage = {
 				text: `
 *${escapeReservedCharacter(event.metadata.type)}*
-${escapeReservedCharacter(event.metadata.value)}
-
-\`\`\`
-${escapeReservedCharacter(event.culprit)}
-\`\`\`
+\`${escapeReservedCharacter(event.metadata.value)}\`
 `,
 				parse_mode: 'MarkdownV2',
 				reply_markup: {

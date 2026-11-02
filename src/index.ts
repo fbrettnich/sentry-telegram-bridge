@@ -1,4 +1,5 @@
-import { escapeReservedCharacter, sendTelegramMessage } from './telegram';
+import { buildTelegramMessage } from './message';
+import { sendTelegramMessage } from './telegram';
 import { SentryHookResource, SentryWebhookBody } from './types/sentry/webhook';
 import { verifySignature } from './verify';
 
@@ -26,24 +27,7 @@ export default {
 		const body: SentryWebhookBody = await request.json();
 
 		if (sentryHookResource === 'event_alert') {
-			const event = body.data.event;
-			const telegramMessage = {
-				text: `
-*${escapeReservedCharacter(event.metadata.type)}*
-\`${escapeReservedCharacter(event.metadata.value)}\`
-`,
-				parse_mode: 'MarkdownV2',
-				reply_markup: {
-					inline_keyboard: [
-						[
-							{
-								text: 'Open in Sentry',
-								url: event.web_url,
-							},
-						],
-					],
-				},
-			};
+			const telegramMessage = buildTelegramMessage(body.data.event);
 
 			const success = await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, telegramMessage);
 			if (!success) return new Response(null, { status: 500 });

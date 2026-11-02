@@ -12,12 +12,15 @@ export async function sendTelegramMessage(token: string, chatId: string, body: R
 		}),
 	});
 
+	if (!response.ok) console.error(`Telegram API error ${response.status}: ${await response.text()}`);
+
 	return response.ok;
 }
 
 export function escapeReservedCharacter(text: string): string {
 	// https://core.telegram.org/bots/api#markdownv2-style
 	return text
+		.replace(/\\/g, '\\\\')
 		.replace(/\_/g, '\\_')
 		.replace(/\*/g, '\\*')
 		.replace(/\[/g, '\\[')

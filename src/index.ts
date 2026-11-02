@@ -1,4 +1,4 @@
-import { buildTelegramMessage } from './message';
+import { buildMetricAlertMessage, buildTelegramMessage } from './message';
 import { sendTelegramMessage } from './telegram';
 import { SentryHookResource, SentryWebhookBody } from './types/sentry/webhook';
 import { verifySignature } from './verify';
@@ -28,6 +28,11 @@ export default {
 
 		if (sentryHookResource === 'event_alert') {
 			const telegramMessage = buildTelegramMessage(body.data.event);
+
+			const success = await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, telegramMessage);
+			if (!success) return new Response(null, { status: 500 });
+		} else if (sentryHookResource === 'metric_alert') {
+			const telegramMessage = buildMetricAlertMessage(body.action, body.data);
 
 			const success = await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, telegramMessage);
 			if (!success) return new Response(null, { status: 500 });

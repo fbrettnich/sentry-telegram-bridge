@@ -1,13 +1,17 @@
 type SentryHookResource = 'installation' | 'event_alert' | 'issue' | 'metric_alert' | 'error' | 'comment';
 
-type SentryWebhookAction = 'triggered';
+type SentryWebhookAction = 'triggered' | 'critical' | 'warning' | 'resolved';
 
 type SentryWebhookInstallation = {
 	uuid: string;
 };
 
 type SentryWebhookData = {
-	event: any;
+	event?: any;
+	metric_alert?: any;
+	description_title?: string;
+	description_text?: string;
+	web_url?: string;
 };
 
 type SentryWebhookActorType = 'user' | 'application';

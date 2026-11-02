@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTelegramMessage } from '../src/message';
+import { buildMetricAlertMessage, buildTelegramMessage } from '../src/message';
 import { escapeReservedCharacter } from '../src/telegram';
 
 const baseEvent = {
@@ -52,6 +52,40 @@ describe('buildTelegramMessage', () => {
 		const { text } = buildTelegramMessage({ ...baseEvent, title: 'N+1 Query', metadata: { value: 'a'.repeat(10000) } });
 
 		expect(text.length).toBeLessThan(4096);
+	});
+});
+
+describe('buildMetricAlertMessage', () => {
+	const data = {
+		description_title: 'Resolved: Too many errors',
+		description_text: '1000 events in the last 10 minutes\nFilter: level:error',
+		web_url: 'https://sentry.io/organizations/example-org/alerts/1/',
+		metric_alert: {
+			projects: ['example-project', 'other-project'],
+			alert_rule: { name: 'Too many errors', environment: 'prod' },
+		},
+	};
+
+	it('shows title, description, projects, environment and status', () => {
+		const { text, reply_markup } = buildMetricAlertMessage('resolved', data);
+
+		expect(text).toContain('*Resolved: Too many errors*');
+		expect(text).toContain('`1000 events in the last 10 minutes\nFilter: level:error`');
+		expect(text).toContain('Project: `example\\-project, other\\-project`');
+		expect(text).toContain('Environment: `prod`');
+		expect(text).toContain('Status: `resolved`');
+		expect(reply_markup.inline_keyboard[0][0].url).toBe(data.web_url);
+	});
+
+	it('falls back to the rule name and omits a null environment', () => {
+		const { text } = buildMetricAlertMessage('critical', {
+			web_url: data.web_url,
+			metric_alert: { projects: ['example-project'], alert_rule: { name: 'Too many errors', environment: null } },
+		});
+
+		expect(text).toContain('*Too many errors*');
+		expect(text).not.toContain('Environment:');
+		expect(text).toContain('Status: `critical`');
 	});
 });
 

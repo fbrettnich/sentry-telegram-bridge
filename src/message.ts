@@ -16,6 +16,15 @@ function getProjectSlugFromEventUrl(eventUrl: unknown): string | undefined {
 	return eventUrl.match(/\/projects\/[^/]+\/([^/]+)\//)?.[1];
 }
 
+// Sentry uses "<untitled>" as a placeholder, e.g. for generic events like test notifications
+const UNTITLED_PLACEHOLDER = '<untitled>';
+
+function pickTitle(...candidates: unknown[]): string | undefined {
+	return candidates.find(
+		(candidate): candidate is string => typeof candidate === 'string' && candidate !== '' && candidate !== UNTITLED_PLACEHOLDER,
+	);
+}
+
 function truncate(text: string): string {
 	return text.length > MAX_VALUE_LENGTH ? `${text.slice(0, MAX_VALUE_LENGTH)}…` : text;
 }
@@ -46,7 +55,7 @@ function buildMessage(title: string, value: string | null | undefined, details: 
 
 export function buildTelegramMessage(event: any): Record<string, any> {
 	// Only error events carry metadata.type, message and performance events (N+1 etc.) do not
-	const title: string = event.metadata?.type ?? event.metadata?.title ?? event.title ?? 'Sentry Alert';
+	const title = pickTitle(event.metadata?.type, event.metadata?.title, event.title) ?? 'Sentry Alert';
 	const value: string | undefined = event.metadata?.value ?? event.message;
 
 	return buildMessage(

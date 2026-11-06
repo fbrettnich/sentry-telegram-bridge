@@ -16,6 +16,23 @@ describe('buildTelegramMessage', () => {
 		expect(text).toContain('Level: `info`');
 	});
 
+	it('skips the <untitled> placeholder of generic events like test notifications', () => {
+		const { text } = buildTelegramMessage({
+			...baseEvent,
+			title: '<untitled>',
+			metadata: { title: '<untitled>', value: 'This is an example node-nestjs exception' },
+		});
+
+		expect(text).toContain('*Sentry Alert*');
+		expect(text).not.toContain('untitled');
+	});
+
+	it('uses the event title when only metadata carries the placeholder', () => {
+		const { text } = buildTelegramMessage({ ...baseEvent, title: 'Slow DB Query', metadata: { title: '<untitled>' } });
+
+		expect(text).toContain('*Slow DB Query*');
+	});
+
 	it('does not throw when metadata and value are missing', () => {
 		const { text } = buildTelegramMessage({ ...baseEvent, title: 'Something happened' });
 
